@@ -2,16 +2,12 @@
   (:require [clojure.string :as str]
             [advent2020.lib.utils :as u]))
 
-(def day02-sample ["1-3 a: abcde"
-                   "1-3 b: cdefg"
-                   "2-9 c: ccccccccc"])
-
 (defn parse
   [input]
-  (let [segments (str/split input #" ")
-        limits (str/split (first segments) #"-")
+  (let [segments  (str/split input #" ")
+        limits    (str/split (first segments) #"-")
         character (first (second segments))
-        password (last segments)]
+        password  (last segments)]
     {:min (Integer/parseInt (first limits))
      :max (Integer/parseInt (second limits))
      :char character
@@ -20,7 +16,7 @@
 (def day02-input
   (map parse (u/puzzle-input "day02-input.txt")))
 
-(defn valid?
+(defn part1-valid?
   [{:keys [min max char pass]}]
   (let [count (get (frequencies pass) char)]
     (and
@@ -30,14 +26,17 @@
 
 (defn day02-part1-soln
   []
-  (count (filter valid? day02-input)))
+  (count (filter part1-valid? day02-input)))
 
-(comment
-  (parse (first day02-sample))
-  (valid? (parse (first day02-sample)))
-  (parse (second day02-sample))
-  (valid? (parse (second day02-sample)))
-  (valid? (parse (last day02-sample)))
+(defn part2-valid?
+  [{:keys [min max char pass]}]
+  (let [a (nth pass (dec min))
+        b (nth pass (dec max))]
+    (or (and (= a char)
+             (not (= b char)))
+        (and (= b char)
+             (not (= a char))))))
 
-  (take 3 day02-input)
-  (frequencies "abcdefab"))
+(defn day02-part2-soln
+  []
+  (count (filter part2-valid? day02-input)))
