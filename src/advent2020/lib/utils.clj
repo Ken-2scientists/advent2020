@@ -7,3 +7,11 @@
        io/resource
        io/reader
        line-seq))
+
+(defn list-line
+  [line]
+  (read-string (str "[" line "]")))
+
+(defn puzzle-input-vec
+  [filename]
+  (-> filename puzzle-input first list-line))
