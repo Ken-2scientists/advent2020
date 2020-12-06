@@ -26,12 +26,6 @@
         ks     (set (keys passport))]
     (set/subset? needed ks)))
 
-(defn day04-part1-soln
-  []
-  (->> (parse day04-input)
-       (filter keys-valid?)
-       count))
-
 (defn byr-valid?
   [{:keys [byr]}]
   (let [yr (read-string byr)]
@@ -93,6 +87,12 @@
               hcl-valid?
               ecl-valid?
               pid-valid?))
+
+(defn day04-part1-soln
+  []
+  (->> (parse day04-input)
+       (filter keys-valid?)
+       count))
 
 (defn day04-part2-soln
   []

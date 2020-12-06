@@ -51,10 +51,6 @@ iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719")
     (is (= '(true false true false)
            (map t/keys-valid? (t/parse day04-sample))))))
 
-(deftest day04-part1-soln
-  (testing "Reproduces the answer for day04, part1"
-    (is (= 192 (t/day04-part1-soln)))))
-
 (deftest byr-valid
   (testing "Correctly determines that birth years are valid"
     (is (= true  (t/byr-valid? {:byr "2002"})))
@@ -108,6 +104,10 @@ iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719")
            (map t/passport-valid? (t/parse day04-valid-samples))))
     (is (= '(false false false false)
            (map t/passport-valid? (t/parse day04-invalid-samples))))))
+
+(deftest day04-part1-soln
+  (testing "Reproduces the answer for day04, part1"
+    (is (= 192 (t/day04-part1-soln)))))
 
 (deftest day04-part2-soln
   (testing "Reproduces the answer for day04, part2"

@@ -24,10 +24,6 @@
      (>= count min)
      (<= count max))))
 
-(defn day02-part1-soln
-  []
-  (count (filter part1-valid? day02-input)))
-
 (defn part2-valid?
   [{:keys [min max char pass]}]
   (let [a (nth pass (dec min))
@@ -36,6 +32,10 @@
              (not (= b char)))
         (and (= b char)
              (not (= a char))))))
+
+(defn day02-part1-soln
+  []
+  (count (filter part1-valid? day02-input)))
 
 (defn day02-part2-soln
   []

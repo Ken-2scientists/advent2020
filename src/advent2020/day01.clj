@@ -12,10 +12,6 @@
          (map (partial - total))
          (filter candidate-set))))
 
-(defn day01-part1-soln
-  []
-  (apply * (find-pair-that-sums-to-total 2020 day01-input)))
-
 (defn find-triple-that-sums-to-total
   [total candidates]
   (let [candidate-set (->> (combo/cartesian-product candidates candidates)
@@ -24,6 +20,10 @@
                            set)]
     (->> candidates
          (filter candidate-set))))
+
+(defn day01-part1-soln
+  []
+  (apply * (find-pair-that-sums-to-total 2020 day01-input)))
 
 (defn day02-part2-soln
   []

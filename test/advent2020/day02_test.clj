@@ -17,15 +17,15 @@
     (is (= false (t/part1-valid? (t/parse (second day02-sample)))))
     (is (= true (t/part1-valid? (t/parse (last day02-sample)))))))
 
-(deftest day02-part1-soln
-  (testing "Reproduces the answer for day02, part1"
-    (is (= 418 (t/day02-part1-soln)))))
-
 (deftest part2-validator
   (testing "Correctly validates per the rules in part2"
     (is (= true (t/part2-valid? (t/parse (first day02-sample)))))
     (is (= false (t/part2-valid? (t/parse (second day02-sample)))))
     (is (= false (t/part2-valid? (t/parse (last day02-sample)))))))
+
+(deftest day02-part1-soln
+  (testing "Reproduces the answer for day02, part1"
+    (is (= 418 (t/day02-part1-soln)))))
 
 (deftest day02-part2-soln
   (testing "Reproduces the answer for day02, part2"

@@ -32,15 +32,15 @@
        (filter #(= :tree %))
        count))
 
+(defn trees-along-slopes
+  [basemap slopes]
+  (map (partial trees-along-slope basemap) slopes))
+
 (defn day03-part1-soln
   []
   (let [basemap (forest-basemap day03-input)
         slope   [3 1]]
     (trees-along-slope basemap slope)))
-
-(defn trees-along-slopes
-  [basemap slopes]
-  (map (partial trees-along-slope basemap) slopes))
 
 (defn day03-part2-soln
   []
