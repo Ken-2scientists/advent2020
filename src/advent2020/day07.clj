@@ -13,6 +13,15 @@ vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
 faded blue bags contain no other bags.
 dotted black bags contain no other bags." #"\n"))
 
+(def day07-sample2 (str/split
+                    "shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags." #"\n"))
+
 (defn keywordize
   [adj color]
   (keyword (str/join "-" [adj color])))
@@ -51,6 +60,18 @@ dotted black bags contain no other bags." #"\n"))
         (let [outers (mapcat (partial get nestings) next-bags)]
           (recur outers (into outer-bags outers)))))))
 
+(defn satisfy-rule
+  [rules cnt bag]
+  (let [needed-bags (get rules bag)]
+    (if (empty? needed-bags)
+      cnt
+      (* cnt
+         (reduce + 1 (map #(satisfy-rule rules (first %) (second %)) needed-bags))))))
+
 (defn day07-part1-soln
   []
   (count (all-outer-bags day07-input :shiny-gold)))
+
+(defn day07-part2-soln
+  []
+  (dec (satisfy-rule (into {} day07-input) 1 :shiny-gold)))
