@@ -1,6 +1,8 @@
 (ns advent2020.lib.utils
   (:require [clojure.java.io :as io]))
 
+(def not-empty? (complement empty?))
+
 (defn puzzle-input
   [filename]
   (->> filename
