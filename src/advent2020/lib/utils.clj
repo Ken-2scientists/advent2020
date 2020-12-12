@@ -20,3 +20,7 @@
   "Applies the function f to the values of the map m"
   [f m]
   (zipmap (keys m) (map f (vals m))))
+
+(defn index-of
+  [x coll]
+  (ffirst (filter #(= x (second %)) (map-indexed vector coll))))

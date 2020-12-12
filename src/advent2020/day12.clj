@@ -51,15 +51,50 @@ F11" #"\n")))
       "R" (assoc state :heading (rotate :right heading amount))
       "F" (assoc state :pos (forward pos heading amount)))))
 
-(def start {:pos [0 0] :heading :east})
+(def start {:pos [0 0] :waypoint [10 1] :heading :east})
 
 (defn day12-part1-soln
   []
-  (->> day12-sample
+  (->> day12-input
        (reduce exec-cmd start)
        :pos
        (map #(Math/abs %))
        (reduce +)))
 
+(defn rotate2
+  [dir [x y] amount]
+  (case dir
+    :right (case amount
+             90 [y (- x)]
+             180 [(- x) (- y)]
+             270 [(- y) x])
+    :left (case amount
+            90 [(- y) x]
+            180 [(- x) (- y)]
+            270 [y (- x)])))
 
-(reduce + (map #(Math/abs %)))
+(defn forward2
+  [pos waypoint amount]
+  (vec (map + pos (map (partial * amount) waypoint))))
+
+(defn exec-cmd2
+  [{:keys [pos waypoint] :as state} [dir amount]]
+  (let [[x y] waypoint]
+    (case dir
+      "N" (assoc state :waypoint [x (+ y amount)])
+      "S" (assoc state :waypoint [x (- y amount)])
+      "E" (assoc state :waypoint [(+ x amount) y])
+      "W" (assoc state :waypoint [(- x amount) y])
+      "L" (assoc state :waypoint (rotate2 :left waypoint amount))
+      "R" (assoc state :waypoint (rotate2 :right waypoint amount))
+      "F" (assoc state :pos (forward2 pos waypoint amount)))))
+
+(reduce exec-cmd2 start (take 5 day12-sample))
+
+(defn day12-part1-soln
+  []
+  (->> day12-input
+       (reduce exec-cmd2 start)
+       :pos
+       (map #(Math/abs %))
+       (reduce +)))
