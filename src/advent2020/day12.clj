@@ -1,6 +1,5 @@
 (ns advent2020.day12
-  (:require [clojure.string :as str]
-            [advent2020.lib.utils :as u]))
+  (:require [advent2020.lib.utils :as u]))
 
 (defn parse
   [cmd]
@@ -10,14 +9,7 @@
 
 (def day12-input (map parse (u/puzzle-input "day12-input.txt")))
 
-(def day12-sample
-  (map parse
-       (str/split
-        "F10
-N3
-F7
-R90
-F11" #"\n")))
+(def start {:pos [0 0] :waypoint [10 1] :heading :east})
 
 (defn rotate
   [dir heading amount]
@@ -51,25 +43,15 @@ F11" #"\n")))
       "R" (assoc state :heading (rotate :right heading amount))
       "F" (assoc state :pos (forward pos heading amount)))))
 
-(def start {:pos [0 0] :waypoint [10 1] :heading :east})
-
-(defn day12-part1-soln
-  []
-  (->> day12-input
-       (reduce exec-cmd start)
-       :pos
-       (map #(Math/abs %))
-       (reduce +)))
-
 (defn rotate2
   [dir [x y] amount]
   (case dir
     :right (case amount
-             90 [y (- x)]
+             90  [y (- x)]
              180 [(- x) (- y)]
              270 [(- y) x])
     :left (case amount
-            90 [(- y) x]
+            90  [(- y) x]
             180 [(- x) (- y)]
             270 [y (- x)])))
 
@@ -89,12 +71,18 @@ F11" #"\n")))
       "R" (assoc state :waypoint (rotate2 :right waypoint amount))
       "F" (assoc state :pos (forward2 pos waypoint amount)))))
 
-(reduce exec-cmd2 start (take 5 day12-sample))
-
-(defn day12-part1-soln
-  []
-  (->> day12-input
-       (reduce exec-cmd2 start)
+(defn final-distance
+  [input rules]
+  (->> input
+       (reduce rules start)
        :pos
        (map #(Math/abs %))
        (reduce +)))
+
+(defn day12-part1-soln
+  []
+  (final-distance day12-input exec-cmd))
+
+(defn day12-part2-soln
+  []
+  (final-distance day12-input exec-cmd2))
