@@ -2,23 +2,13 @@
   (:require [clojure.string :as str]
             [advent2020.lib.utils :as u]))
 
-(def day08-sample
-  "nop +0
-acc +1
-jmp +4
-acc +3
-jmp -3
-acc -99
-acc +1
-jmp -4
-acc +6")
+
 
 (defn parse
   [line]
   (let [[op arg] (str/split line #"\ ")]
     [(keyword op) (read-string arg)]))
 
-(def code (map parse (str/split day08-sample #"\n")))
 (def day08-input (map parse (u/puzzle-input "day08-input.txt")))
 
 (defn execute
@@ -37,10 +27,6 @@ acc +6")
       (let [op (nth ops (:line state))
             new-state (execute state op)]
         (recur new-state (conj lines (:line state)))))))
-
-(defn day08-part1-soln
-  []
-  (acc-value-at-second-loop day08-input))
 
 (defn jmp-or-nop-lines
   [ops]
@@ -72,10 +58,18 @@ acc +6")
               new-state (execute state op)]
           (recur new-state (conj lines (:line state))))))))
 
-(defn day08-part2-soln
-  []
-  (->> (variations day08-input)
+(defn acc-value-for-finite-loop
+  [input]
+  (->> (variations input)
        (map finite-and-infinite-loop)
        (filter #(:finite %))
        first
        :acc))
+
+(defn day08-part1-soln
+  []
+  (acc-value-at-second-loop day08-input))
+
+(defn day08-part2-soln
+  []
+  (acc-value-for-finite-loop day08-input))
