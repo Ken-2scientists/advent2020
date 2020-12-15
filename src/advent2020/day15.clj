@@ -39,3 +39,7 @@
 (defn day15-part1-soln
   []
   (last (memory-seq day15-input 2020)))
+
+(defn day15-part2-soln
+  []
+  (last (memory-seq day15-input 30000000)))
