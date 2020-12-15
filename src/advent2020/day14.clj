@@ -62,14 +62,3 @@ mem[8] = 0" #"\n")))
 (defn day14-part1-soln
   []
   (register-sum day14-input))
-
-
-
-
-
-(parse-mask "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X")
-(parse-mask "mask = 0X0X1110X1010X1X10010X0011010X100110")
-
-(bit-or 64 (bit-and 68719476733 11))
-(bit-or 64 (bit-and 68719476733 101))
-(bit-or 64 (bit-and 68719476733 0))
