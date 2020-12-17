@@ -40,6 +40,20 @@ nearby tickets:
 55,2,20
 38,6,12"))
 
+(def day16-sample2
+  (parse
+   "class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19
+
+your ticket:
+11,12,13
+
+nearby tickets:
+3,9,18
+15,1,5
+5,14,9"))
+
 (def day16-input (->>
                   (u/puzzle-input "day16-input.txt")
                   (str/join "\n")
@@ -51,6 +65,11 @@ nearby tickets:
        (mapcat #(range (first %) (inc (second %))))
        (into #{})))
 
+(defn valid-nearby
+  [{:keys [rules nearby]}]
+  (let [valid? (valid-values rules)]
+    (filter valid? (flatten nearby))))
+
 (defn invalid-nearby
   [{:keys [rules nearby]}]
   (let [valid? (valid-values rules)
@@ -60,3 +79,26 @@ nearby tickets:
 (defn day16-part1-soln
   []
   (reduce + (invalid-nearby day16-input)))
+
+(defn rule-matchers
+  [{:keys [desc ranges]}]
+  (fn [coll]
+    (let [check (->> ranges
+                     (mapcat #(range (first %) (inc (second %))))
+                     (into #{}))]
+      (when (every? check coll) desc))))
+
+(def mrs (map rule-matchers (:rules day16-sample2)))
+(def tst (fn [c] (set (filter some? (map #(% c) mrs)))))
+(def cls (apply mapv vector (:nearby day16-sample2)))
+(map tst cls)
+
+
+(defn identify-slots
+  [{:keys [rules] :as input}]
+  (let [matchers (map rule-matchers rules)
+        test (fn [col] (set (filter some? (map #(% col) matchers))))
+        cols (apply mapv vector (valid-nearby input))]
+    (map test cols)))
+
+(identify-slots day16-input)

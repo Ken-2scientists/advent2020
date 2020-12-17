@@ -23,6 +23,11 @@
   [f m]
   (zipmap (keys m) (map f (vals m))))
 
+(defn kmap
+  "Applies the function f to the keys of the map m"
+  [f m]
+  (zipmap (map f (keys m)) (vals m)))
+
 (defn index-of
   [x coll]
   (ffirst (filter #(= x (second %)) (map-indexed vector coll))))
