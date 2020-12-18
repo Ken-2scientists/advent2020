@@ -54,6 +54,8 @@ nearby tickets:
 15,1,5
 5,14,9"))
 
+day16-sample
+
 (def day16-input (->>
                   (u/puzzle-input "day16-input.txt")
                   (str/join "\n")
@@ -65,20 +67,16 @@ nearby tickets:
        (mapcat #(range (first %) (inc (second %))))
        (into #{})))
 
-(defn valid-nearby
-  [{:keys [rules nearby]}]
-  (let [valid? (valid-values rules)]
-    (filter valid? (flatten nearby))))
-
 (defn invalid-nearby
   [{:keys [rules nearby]}]
   (let [valid? (valid-values rules)
         invalid? (complement valid?)]
     (filter invalid? (flatten nearby))))
 
-(defn day16-part1-soln
-  []
-  (reduce + (invalid-nearby day16-input)))
+(defn valid-tickets
+  [{:keys [rules nearby]}]
+  (let [valid? (valid-values rules)]
+    (filter (partial every? valid?) nearby)))
 
 (defn rule-matchers
   [{:keys [desc ranges]}]
@@ -88,17 +86,36 @@ nearby tickets:
                      (into #{}))]
       (when (every? check coll) desc))))
 
-(def mrs (map rule-matchers (:rules day16-sample2)))
-(def tst (fn [c] (set (filter some? (map #(% c) mrs)))))
-(def cls (apply mapv vector (:nearby day16-sample2)))
-(map tst cls)
-
-
 (defn identify-slots
   [{:keys [rules] :as input}]
   (let [matchers (map rule-matchers rules)
         test (fn [col] (set (filter some? (map #(% col) matchers))))
-        cols (apply mapv vector (valid-nearby input))]
-    (map test cols)))
+        cols (apply mapv vector (valid-tickets input))
+        matches (map test cols)
+        candidates (zipmap (range (count matches)) matches)]
+    (loop [known #{} mapping {} possible candidates n 0]
+      (if (empty? possible)
+        mapping
+        (let [[pos fieldset] (first (filter #(= 1 (count (val %))) possible))
+              field (first fieldset)]
+          (recur (conj known field)
+                 (assoc mapping pos field)
+                 (u/fmap #(disj % field) (dissoc possible pos))
+                 (inc n)))))))
 
-(identify-slots day16-input)
+(defn resolved-ticket
+  [{:keys [yours] :as input}]
+  (let [mapping (identify-slots input)]
+    (into {} (map-indexed (fn [idx val] [(get mapping idx) val]) yours))))
+
+
+(defn day16-part1-soln
+  []
+  (reduce + (invalid-nearby day16-input)))
+
+(defn day16-part2-soln
+  []
+  (->> (resolved-ticket day16-input)
+       (filter #(str/starts-with? (symbol (key %)) "departure"))
+       (map second)
+       (reduce *)))
