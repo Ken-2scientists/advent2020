@@ -12,7 +12,7 @@
   "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2")
 
 (deftest infix-test
-  (testing "Math operator precence works as described"
+  (testing "Can correctly compute infix expressions"
     (is (= 71    (t/infix (t/parse day18-sample1))))
     (is (= 51    (t/infix (t/parse day18-sample2))))
     (is (= 26    (t/infix (t/parse day18-sample3))))
@@ -20,6 +20,19 @@
     (is (= 12240 (t/infix (t/parse day18-sample5))))
     (is (= 13632 (t/infix (t/parse day18-sample6))))))
 
+(deftest infix-test2
+  (testing "Infix expressions with operator precedence"
+    (is (= 231    (t/infix (t/parse2 day18-sample1))))
+    (is (= 51     (t/infix (t/parse2 day18-sample2))))
+    (is (= 46     (t/infix (t/parse2 day18-sample3))))
+    (is (= 1445   (t/infix (t/parse2 day18-sample4))))
+    (is (= 669060 (t/infix (t/parse2 day18-sample5))))
+    (is (= 23340  (t/infix (t/parse2 day18-sample6))))))
+
 (deftest day18-part1-soln
   (testing "Reproduces the answer for day18, part1"
     (is (= 69490582260 (t/day18-part1-soln)))))
+
+(deftest day18-part2-soln
+  (testing "Reproduces the answer for day18, part2"
+    (is (= 362464596624526 (t/day18-part2-soln)))))
