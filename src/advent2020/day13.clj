@@ -1,7 +1,7 @@
 (ns advent2020.day13
   (:require [clojure.string :as str]
-            [advent2020.lib.math :as math]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.math :as math]
+            [advent-utils.core :as u]))
 
 (defn parse
   [input]

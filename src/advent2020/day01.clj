@@ -1,6 +1,6 @@
 (ns advent2020.day01
   (:require [clojure.math.combinatorics :as combo]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.core :as u]))
 
 (def day01-input
   (map read-string (u/puzzle-input "day01-input.txt")))

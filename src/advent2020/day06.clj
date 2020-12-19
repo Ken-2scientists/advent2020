@@ -1,7 +1,7 @@
 (ns advent2020.day06
   (:require [clojure.set :as set]
             [clojure.string :as str]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.core :as u]))
 
 (def day06-input (str/join "\n" (u/puzzle-input "day06-input.txt")))
 

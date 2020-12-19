@@ -1,24 +1,20 @@
 (ns advent2020.day03
-  (:require [advent2020.lib.ascii :as ascii]
-            [advent2020.lib.utils :as u]))
+  (:require [advent-utils.ascii :as ascii]
+            [advent-utils.core :as u]))
 
 (def day03-input (u/puzzle-input "day03-input.txt"))
 
 (defn forest-basemap
   [ascii-lines]
   (let [forest-mapping {\. :space
-                        \# :tree}
-        height         (count ascii-lines)
-        width          (count (first ascii-lines))]
-    {:height height
-     :width  width
-     :themap (ascii/ascii->map forest-mapping ascii-lines)}))
+                        \# :tree}]
+    (ascii/ascii->map forest-mapping ascii-lines)))
 
 (defn get-position
-  [{:keys [height width themap]} [x y]]
+  [{:keys [height width grid]} [x y]]
   (let [realx (mod x width)
         realy (mod y height)]
-    (get themap [realx realy])))
+    (get grid [realx realy])))
 
 (defn items-along-slope
   [{:keys [height] :as basemap} [right down]]

@@ -1,17 +1,13 @@
 (ns advent2020.day11
-  (:require [advent2020.lib.ascii :as ascii]
-            [advent2020.lib.utils :as u]))
+  (:require [advent-utils.ascii :as ascii]
+            [advent-utils.core :as u]))
 
 (defn ferry-seatmap
   [ascii-lines]
   (let [seat-mapping {\. :space
                       \# :occupied
-                      \L :seat}
-        height       (count ascii-lines)
-        width        (count (first ascii-lines))]
-    {:height height
-     :width  width
-     :themap (ascii/ascii->map seat-mapping ascii-lines)}))
+                      \L :seat}]
+    (ascii/ascii->map seat-mapping ascii-lines)))
 
 (def day11-input (ferry-seatmap (u/puzzle-input "day11-input.txt")))
 
@@ -22,22 +18,22 @@
        (filter #(not= [0 0] %))))
 
 (defn seats
-  [themap]
-  (map first (filter #(= :seat (val %)) themap)))
+  [grid]
+  (map first (filter #(= :seat (val %)) grid)))
 
 (defn adjacent
   [pos]
   (map #(mapv + pos %) dirs))
 
 (defn adjacency
-  [{:keys [themap]}]
-  (let [seats (seats themap)]
+  [{:keys [grid]}]
+  (let [seats (seats grid)]
     (zipmap seats (map adjacent seats))))
 
 (defn rules
-  [limit adjacencies themap pos]
-  (let [seat      (themap pos)
-        neighbors (map themap (adjacencies pos))]
+  [limit adjacencies grid pos]
+  (let [seat      (grid pos)
+        neighbors (map grid (adjacencies pos))]
     (case seat
       :seat (if (not (some #{:occupied} neighbors))
               :occupied
@@ -48,11 +44,11 @@
       seat)))
 
 (defn apply-rules-until-static
-  [limit adjacency {:keys [themap] :as seatmap}]
+  [limit adjacency {:keys [grid] :as seatmap}]
   (let [adjacencies (adjacency seatmap)
         seats       (keys adjacencies)
         apply-rules (partial rules limit adjacencies)]
-    (loop [statemap themap]
+    (loop [statemap grid]
       (let [nextmap (map (partial apply-rules statemap) seats)]
         (if (= nextmap (vals statemap))
           nextmap
@@ -78,20 +74,20 @@
               (drop 1 (iterate #(mapv + dir %) pos))))
 
 (defn first-visible-seat
-  [themap sightline]
+  [grid sightline]
   (->> sightline
-       (filter #(= :seat (themap %)))
+       (filter #(= :seat (grid %)))
        first))
 
 (defn first-visible-seats
-  [{:keys [height width themap]} pos]
+  [{:keys [height width grid]} pos]
   (let [sightlines (->> (map (partial sightline height width pos) dirs)
-                        (filter u/not-empty?))]
-    (filter some? (map (partial first-visible-seat themap) sightlines))))
+                        (filter (complement empty?)))]
+    (filter some? (map (partial first-visible-seat grid) sightlines))))
 
 (defn visibility
-  [{:keys [themap] :as seatmap}]
-  (let [seats (seats themap)]
+  [{:keys [grid] :as seatmap}]
+  (let [seats (seats grid)]
     (zipmap seats (map (partial first-visible-seats seatmap) seats))))
 
 (defn day11-part1-soln

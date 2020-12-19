@@ -1,5 +1,5 @@
 (ns advent2020.day12
-  (:require [advent2020.lib.utils :as u]))
+  (:require [advent-utils.core :as u]))
 
 (defn parse
   [cmd]

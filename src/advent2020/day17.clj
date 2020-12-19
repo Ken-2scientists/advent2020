@@ -1,7 +1,7 @@
 (ns advent2020.day17
   (:require [clojure.string :as str]
-            [advent2020.lib.ascii :as ascii]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.ascii :as ascii]
+            [advent-utils.core :as u]))
 
 (defn twod->threed
   [[x y]]
@@ -11,12 +11,8 @@
   [ascii-lines]
   (let [char-map {\. :inactive
                   \# :active}
-        height   (count ascii-lines)
-        width    (count (first ascii-lines))]
-    {:height height
-     :width  width
-     :themap (u/kmap twod->threed
-                     (ascii/ascii->map char-map ascii-lines))}))
+        slice (ascii/ascii->map char-map ascii-lines)]
+    (update slice :grid (partial u/kmap twod->threed))))
 
 (def day17-sample
   (initial-slice
@@ -51,10 +47,10 @@
   (map #(mapv + pos %) adjacent-dirs-4d))
 
 (defn rules
-  [adjacency themap pos]
-  (let [state            (get themap pos :inactive)
+  [adjacency grid pos]
+  (let [state            (get grid pos :inactive)
         active-neighbors (->> (adjacency pos)
-                              (map themap)
+                              (map grid)
                               (filter #{:active})
                               count)]
     (case state
@@ -97,8 +93,8 @@
     [x y z w]))
 
 (defn evolve-3d
-  [{:keys [height width themap]} limit]
-  (loop [statemap themap cnt 0]
+  [{:keys [height width grid]} limit]
+  (loop [statemap grid cnt 0]
     (if (= limit cnt)
       statemap
       (let [locs (scan-space-3d height width limit)
@@ -106,8 +102,8 @@
         (recur (zipmap locs newvals) (inc cnt))))))
 
 (defn evolve-4d
-  [{:keys [height width themap]} limit]
-  (loop [statemap themap cnt 0]
+  [{:keys [height width grid]} limit]
+  (loop [statemap grid cnt 0]
     (if (= limit cnt)
       statemap
       (let [locs (scan-space-4d height width limit)
@@ -122,9 +118,9 @@
        count))
 
 (defn promote-to-4d
-  [{:keys [themap] :as input}]
+  [{:keys [grid] :as input}]
   (let [add-dim (fn [[x y z]] [x y z 0])]
-    (assoc input :themap (u/kmap add-dim themap))))
+    (assoc input :grid (u/kmap add-dim grid))))
 
 (defn day17-part2-soln
   []

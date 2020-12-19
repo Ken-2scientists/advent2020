@@ -1,7 +1,7 @@
 (ns advent2020.day14
   (:require [clojure.math.combinatorics :as combo]
             [clojure.string :as str]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.core :as u]))
 
 (defn parse-mask
   [mask-str]

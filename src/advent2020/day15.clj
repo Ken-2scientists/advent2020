@@ -1,6 +1,6 @@
 (ns advent2020.day15
   (:require [clojure.string :as str]
-            [advent2020.lib.utils :as u]))
+            [advent-utils.core :as u]))
 
 (def day15-input (map read-string
                       (-> (u/puzzle-input "day15-input.txt")
