@@ -1,6 +1,6 @@
 (ns advent2020.day13
   (:require [clojure.string :as str]
-            ;[advent2020.lib.math :as math]
+            [advent2020.lib.math :as math]
             [advent2020.lib.utils :as u]))
 
 (defn parse
@@ -16,6 +16,7 @@
    (str/split
     "939
 7,13,x,x,59,x,31,19" #"\n")))
+
 
 (def day13-input (parse (u/puzzle-input "day13-input.txt")))
 
@@ -35,3 +36,22 @@
 (defn day13-part1-soln
   []
   (bus-id-by-wait-time day13-input))
+
+(defn foo
+  [[a b] [c d]]
+  [(* a c) (+ (* c (math/mod-div a (- b d) c)) d)])
+
+(defn earliest-consecutive-buses
+  [{:keys [buses]}]
+  (let [positions (->>
+                   (map-indexed (fn [i v] [v i]) buses)
+                   (filter #(not= 'x (first %))))
+        main-bus  (ffirst positions)
+        steps (sort-by first > (rest positions))
+        offsets (map (fn [[a b]]
+                       [a  (math/mod-div a (- b) main-bus)]) steps)]
+    (* main-bus (second (reduce foo offsets)))))
+
+(defn day13-part2-soln
+  []
+  (earliest-consecutive-buses day13-input))
