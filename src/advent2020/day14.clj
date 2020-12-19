@@ -14,9 +14,14 @@
                            (group-by first)
                            (u/fmap #(map second %)))
         and-mask (reduce bit-clear 68719476735 (override-bits 0))
-        or-mask  (reduce bit-set 0 (override-bits 1))]
-    (println (keys override-bits))
-    {:and-mask and-mask :or-mask or-mask :exes (get override-bits 'X)}))
+        or-mask  (reduce bit-set 0 (override-bits 1))
+        float-mask (reduce bit-clear
+                           (reduce bit-set 0 (concat (override-bits 0) (override-bits 1)))
+                           (override-bits 'X))]
+    {:and-mask and-mask
+     :or-mask or-mask
+     :float-mask float-mask
+     :exes (get override-bits 'X)}))
 
 (defn parse-assign
   [assign-str]
@@ -74,10 +79,11 @@ mem[26] = 1" #"\n")))
        (map (partial apply +))))
 
 (defn addresses
-  [{:keys [or-mask exes]} address]
-  (map (partial + (bit-or or-mask address)) exes))
-
-(addresses (nth day14-sample2 0) 42)
+  [{:keys [float-mask or-mask exes]} address]
+  (let [raw (->> address
+                 (bit-and float-mask)
+                 (bit-or  or-mask))]
+    (map (partial + raw) (floating-vals exes))))
 
 (defn execute2
   [instructions]
@@ -89,16 +95,17 @@ mem[26] = 1" #"\n")))
           (recur next-inst registers (rest inst))
           (let [{:keys [address val]} next-inst]
             (recur mask
-                   (assoc registers address
-                          (->> val
-                               (bit-and (:and-mask mask))
-                               (bit-or  (:or-mask mask))))
+                   (reduce #(assoc %1 %2 val) registers (addresses mask address))
                    (rest inst))))))))
 
 (defn register-sum
-  [input]
-  (reduce + (vals (execute input))))
+  [input decoder]
+  (reduce + (vals (decoder input))))
 
 (defn day14-part1-soln
   []
-  (register-sum day14-input))
+  (register-sum day14-input execute))
+
+(defn day14-part2-soln
+  []
+  (register-sum day14-input execute2))
