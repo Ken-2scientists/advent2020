@@ -10,6 +10,10 @@
 (def day13-sample5 {:buses '(67,7,x,59,61)})
 (def day13-sample6 {:buses '(1789,37,47,1889)})
 
+(deftest earliest-bus-and-wait-time
+  (testing "Can find the earliest bus available after time t"
+    (is (= [59 5] (t/earliest-bus-and-wait-time day13-sample1)))))
+
 (deftest earliest-time-for-consecutive-buses
   (testing "Can find the earliest time for consecutive buses to depart"
     (is (= 1068781    (t/earliest-consecutive-buses day13-sample1)))

@@ -11,21 +11,16 @@
     {:time (read-string time)
      :buses buses}))
 
-(def day13-sample
-  (parse
-   (str/split
-    "939
-7,13,x,x,59,x,31,19" #"\n")))
-
-
 (def day13-input (parse (u/puzzle-input "day13-input.txt")))
+
+(defn next-bus
+  [time bus]
+  (* bus (inc (quot time bus))))
 
 (defn earliest-bus-and-wait-time
   [{:keys [time buses]}]
   (let [valid-buses    (filter number? buses)
-        next-bus-times (zipmap valid-buses
-                               (->> (map #(inc (quot time %)) valid-buses)
-                                    (map * valid-buses)))
+        next-bus-times (zipmap valid-buses (map (partial next-bus time) valid-buses))
         [bus-id bus-time] (apply min-key val next-bus-times)]
     [bus-id (- bus-time time)]))
 
@@ -37,20 +32,45 @@
   []
   (bus-id-by-wait-time day13-input))
 
-(defn foo
-  [[a b] [c d]]
-  [(* a c) (+ (* c (math/mod-div a (- b d) c)) d)])
+(defn bus-terms
+  "Computes the coefficients [a, b] of a linear formula f = a*x + b
+   that determines at what times bus will appear a time shift later
+   the main bus. Relies upon main-bus and bus being relatively prime."
+  [main-bus [bus shift]]
+  [bus (math/mod-div bus (- shift) main-bus)])
+
+(defn earliest-match
+  "Computes the coefficients [a b] of a linear formula f = a*x +b
+   that correspond with times when the constraints represented by
+   the two inputs can both be satisfied.
+   
+   The logic is that we're looking for values such that
+     a1*x + b1 = a2*y + b2
+   Solving for y:
+     a2*y = (b1 - b2) + a1*x
+   Take the mod of a1 on both sides:
+     (a2*y) mod a1 = (b1 - b2) mod a1   (using (a1*x) mod a1 = 0)
+   So then we can say:
+     y = ((b1 - b2) / a2) mod a1
+   The first value that represents a match between the two equations is:
+     m = (a2 * y + b2)
+   Because a1 and a2 are relatively prime, this match will recur with a
+   frequency of a1*a2.
+   "
+  [[a1 b1] [a2 b2]]
+  (let [y (math/mod-div a1 (- b1 b2) a2)
+        m (+ (* a2 y) b2)]
+    [(* a1 a2) m]))
 
 (defn earliest-consecutive-buses
   [{:keys [buses]}]
-  (let [positions (->>
-                   (map-indexed (fn [i v] [v i]) buses)
-                   (filter #(not= 'x (first %))))
-        main-bus  (ffirst positions)
-        steps (sort-by first > (rest positions))
-        offsets (map (fn [[a b]]
-                       [a  (math/mod-div a (- b) main-bus)]) steps)]
-    (* main-bus (second (reduce foo offsets)))))
+  (let [main-bus  (first buses)
+        positions (->> (map-indexed (fn [i v] [v i]) buses)
+                       (filter #(not= 'x (first %)))
+                       rest
+                       (sort-by first >))
+        offsets (map (partial bus-terms main-bus) positions)]
+    (* main-bus (second (reduce earliest-match offsets)))))
 
 (defn day13-part2-soln
   []
