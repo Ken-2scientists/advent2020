@@ -116,6 +116,6 @@ day16-sample
 (defn day16-part2-soln
   []
   (->> (resolved-ticket day16-input)
-       (filter #(str/starts-with? (symbol (key %)) "departure"))
+       (filter #(str/starts-with? (str (symbol (key %))) "departure"))
        (map second)
        (reduce *)))
