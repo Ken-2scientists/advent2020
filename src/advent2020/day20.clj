@@ -139,3 +139,32 @@ Tile 3079:
   (->> (u/puzzle-input "day20-input.txt")
        (str/join "\n")
        parse))
+
+(defn edge-compare
+  [edge1 edge2]
+  (or (= edge1 edge2)
+      (= edge1 (reverse edge2))))
+
+(defn edge-match-count
+  [all-edges edge]
+  (->> all-edges
+       (map (partial edge-compare edge))
+       (filter identity)
+       count))
+
+(defn foo
+  [all-tile-edges [tile-id tile-edges]]
+  (let [other-edges (->> (u/without-keys all-tile-edges #{tile-id})
+                         vals
+                         (apply concat))]
+    [tile-id
+     (->> tile-edges
+          (map (partial edge-match-count other-edges))
+          (reduce +))]))
+
+(defn tile-matches
+  [input]
+  (let [tile-edges (u/fmap edges input)]
+    (into {} (map (partial foo tile-edges) tile-edges))))
+
+(tile-matches day20-sample)
