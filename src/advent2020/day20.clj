@@ -143,14 +143,14 @@ Tile 3079:
 
 (defn edge-compare
   [edge1 edge2]
-  (or (= edge1 edge2)
-      (= edge1 (reverse edge2))))
+  (cond (= edge1 edge2) :match
+        (= edge1 (reverse edge2)) :rev-match))
 
 (defn edge-match-count
   [all-edges edge]
   (->> all-edges
        (map (partial edge-compare edge))
-       (filter identity)
+       (filter some?)
        count))
 
 (defn edge-matches
