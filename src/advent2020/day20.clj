@@ -132,50 +132,45 @@ Tile 3079:
        (str/join "\n")
        parse))
 
+(defn edge-val
+  [grid edge-indices]
+  (str/join (map grid edge-indices)))
 
-(defn edges
-  [{:keys [width height grid]}]
+(defn tile-edges
+  [[tile-id {:keys [width height grid]}]]
   (let [edge-coords [(map vector (range width)        (repeat 0))
                      (map vector (range width)        (repeat (dec height)))
                      (map vector (repeat 0)           (range height))
                      (map vector (repeat (dec width)) (range height))]]
-    (map (partial map grid) edge-coords)))
+    (map vector
+         [[tile-id :t] [tile-id :b] [tile-id :l] [tile-id :r]]
+         (map (partial edge-val grid) edge-coords))))
 
 (defn edge-compare
-  [edge1 edge2]
-  (cond (= edge1 edge2) :match
-        (= edge1 (reverse edge2)) :rev-match))
-
-(defn edge-match-count
-  [all-edges edge]
-  (->> all-edges
-       (map (partial edge-compare edge))
-       (filter some?)
-       count))
+  [[id1 edge1] [id2 edge2]]
+  (cond (= edge1 edge2) [[id1 id2] :match]
+        (= edge1 (str/reverse edge2)) [[id1 id2] :rev-match]))
 
 (defn edge-matches
-  [all-tile-edges [tile-id tile-edges]]
-  (let [other-edges (->> (u/without-keys all-tile-edges #{tile-id})
-                         vals
-                         (apply concat))]
-    [tile-id
-     (->> tile-edges
-          (map (partial edge-match-count other-edges))
-          (reduce +))]))
+  [all-edges [[tile-id _] :as edge]]
+  (let [other-edges (filter #(not= tile-id (first (key %))) all-edges)]
+    (map (partial edge-compare edge) other-edges)))
 
-(defn tile-matches
+(defn all-edge-matches
   [input]
-  (let [tile-edges (u/fmap edges input)]
-    (into {} (map (partial edge-matches tile-edges) tile-edges))))
+  (let [edges (into {} (mapcat tile-edges input))]
+    (into {} (filter some? (mapcat (partial edge-matches edges) edges)))))
+
+(defn match-counts-per-tile
+  [matches]
+  (u/fmap count (group-by (comp first ffirst) matches)))
 
 (defn corners
   [input]
-  (let [matches (tile-matches input)]
-    (->> (filter #(= 2 (second %)) matches)
+  (let [match-counts (match-counts-per-tile (all-edge-matches input))]
+    (->> (filter #(= 2 (second %)) match-counts)
          (map first))))
 
 (defn day20-part1-soln
   []
   (reduce * (corners day20-input)))
-
-(corners day20-sample)
