@@ -115,7 +115,7 @@ Tile 3079:
 (deftest corners
   (testing "Finds the corner tiles"
     (is (= '(1171 2971 3079 1951)
-           (t/corners day20-sample)))))
+           (t/corners (t/matching-edges (t/tile-edge-map day20-sample)))))))
 
 (def grid-sample1
   {:width 2
