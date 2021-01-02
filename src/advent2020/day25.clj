@@ -2,7 +2,6 @@
   (:require [advent-utils.math :as math]
             [advent-utils.core :as u]))
 
-(def day25-sample [5764801 17807724])
 (def day25-input (map read-string (u/puzzle-input "day25-input.txt")))
 
 (defn transform
@@ -21,5 +20,3 @@
 (defn day25-part1-soln
   []
   (encryption-key day25-input))
-
-
