@@ -33,3 +33,40 @@ sqjhc mxmxvkd sbzzf (contains fish)" #"\n")))
          (mapcat allergen-to-ingreds)
          (group-by first)
          (u/fmap candidate-fn))))
+
+(defn known-allergens
+  [foods]
+  (let [candidates (allergen-candidates foods)]
+    (apply set/union (vals candidates))))
+
+(defn safe-ingredients
+  [foods]
+  (let [not-allergen? (complement (known-allergens foods))]
+    (filter not-allergen? (mapcat :ingredients foods))))
+
+(defn identify-allergens
+  [foods]
+  (let [cands (allergen-candidates foods)]
+    (loop [candidates cands mapping {}]
+      (if (empty? candidates)
+        (u/fmap first mapping)
+        (let [knowns (into {} (filter #(= 1 (count (val %))) candidates))
+              ingreds (apply set/union (vals knowns))]
+          (recur (->> (apply dissoc candidates (keys knowns))
+                      (u/fmap #(set/difference % ingreds)))
+                 (merge mapping knowns)))))))
+
+(defn allergen-sorted-unsafe-ingredients
+  [foods]
+  (->> (identify-allergens foods)
+       (sort-by key)
+       (map second)
+       (str/join ",")))
+
+(defn day21-part1-soln
+  []
+  (count (safe-ingredients day21-input)))
+
+(defn day21-part2-soln
+  []
+  (allergen-sorted-unsafe-ingredients day21-input))
