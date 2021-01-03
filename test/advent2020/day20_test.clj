@@ -181,6 +181,34 @@ Tile 3079:
   (testing "Reproduces the answer for day20, part1"
     (is (= 79412832860579 (t/day20-part1-soln)))))
 
+
+(deftest orientation-rules
+  (testing "Correctly determines the necessary flips/rotations"
+    (is (= [[:fliph]]
+           (t/orient {1427 :e, 1951 :s, 2971 :n}
+                     {1427 :w, 1951 :s, 2971 :n})))
+    (is (= [[:flipv]]
+           (t/orient {2473 :n, 1489 :e}
+                     {2473 :s, 1489 :e})))
+    (is (= [[:fliph]]
+           (t/orient {1489 :e, 2729 :s}
+                     {1489 :w, 2729 :s})))
+    (is (= [[:fliph]]
+           (t/orient {1951 :w, 3079 :e, 1427 :n}
+                     {1951 :e, 3079 :w, 1427 :n})))
+    (is (= [[:fliph]]
+           (t/orient {1427 :s, 2971 :w, 1171 :e}
+                     {1427 :s, 2971 :e, 1171 :w})))
+    (is (= [[:fliph] [:flipv]]
+           (t/orient {2473 :s, 2311 :w}
+                     {2473 :n, 2311 :e})))
+    (is (= [[:rotate 1] [:fliph]]
+           (t/orient {1171 :w, 3079 :e, 1427 :s}
+                     {1171 :n, 3079 :s, 1427 :e})))))
+
+
+
+
 ;; (deftest day20-part2-soln
 ;;   (testing "Reproduces the answer for day20, part2"
 ;;     (is (= 439 (t/day20-part2-soln)))))

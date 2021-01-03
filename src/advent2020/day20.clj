@@ -145,11 +145,11 @@ Tile 3079:
 
 (defn tile-edges
   [[tile-id {:keys [width height grid]}]]
-  (let [edge-coords [(map vector (range width)             (repeat 0))
-                     (map vector (repeat (dec width))      (range height))
-                     (map vector (range (dec width) -1 -1) (repeat (dec height)))
-                     (map vector (repeat 0)                (range (dec height) -1 -1))]]
-    [tile-id (zipmap '(:n :e :s :w) (map (partial edge grid) edge-coords))]))
+  (let [edge-coords [(map vector (range width)        (repeat 0))
+                     (map vector (range width)        (repeat (dec height)))
+                     (map vector (repeat 0)           (range height))
+                     (map vector (repeat (dec width)) (range height))]]
+    [tile-id (zipmap '(:n :s :w :e) (map (partial edge grid) edge-coords))]))
 
 (defn tile-edge-map
   [tiles]
@@ -158,25 +158,21 @@ Tile 3079:
 (defn index-edge
   [[tile-id edges]]
   (map (fn [[edge-id edge]]
-         [[tile-id edge-id] (edge-hash edge)]) edges))
-
-(defn edge-pairs
-  [tile-edge-map]
-  (let [half-matches (->> tile-edge-map
-                          (mapcat index-edge)
-                          (into {})
-                          (group-by second)
-                          (filter #(= 2 (count (val %))))
-                          vals
-                          (mapv (partial mapv first)))
-        all-matches (concat half-matches (mapv (comp vec reverse) half-matches))]
-    (into {} all-matches)))
+         [(edge-hash edge) [tile-id edge-id]]) edges))
 
 (defn matching-edges
   [tile-edge-map]
-  (->> tile-edge-map
-       edge-pairs
-       (group-by ffirst)))
+  (let [half-matches (->> tile-edge-map
+                          (mapcat index-edge)
+                          (group-by first)
+                          (filter #(= 2 (count (val %))))
+                          (u/fmap (partial map second))
+                          vals)
+        all-matches (concat half-matches (mapv (comp vec reverse) half-matches))
+        edge-map    (->> (map (fn [[[a b] [c d]]] [a [b [c d]]]) all-matches)
+                         (group-by first)
+                         (u/fmap #(into {} (mapv second %))))]
+    edge-map))
 
 (defn corners
   [matching-edges]
@@ -199,9 +195,9 @@ Tile 3079:
 (defn fliph-edge
   [{:keys [n e s w]}]
   {:n n
-   :e (str/reverse w)
+   :e w
    :s s
-   :w (str/reverse e)})
+   :w e})
 
 (defn flipv
   [{:keys [height grid] :as tile}]
@@ -209,9 +205,9 @@ Tile 3079:
 
 (defn flipv-edge
   [{:keys [n e s w]}]
-  {:n (str/reverse s)
+  {:n s
    :e e
-   :s (str/reverse n)
+   :s n
    :w w})
 
 (defn rotate
@@ -222,39 +218,103 @@ Tile 3079:
      :grid (u/kmap mapping grid)}))
 
 (defn rotate-edge
-  [edge]
-  (set/rename-keys edge {:n :e :e :s :s :w :w :n}))
+  [{:keys [n e s w]}]
+  {:n (str/reverse w)
+   :e n
+   :s (str/reverse e)
+   :w s})
 
-;; (filter #(= 1951 ((comp first ffirst) %)) (all-edge-matches day20-sample))
-;; 
-(def grid-sample
-  {:width 2
-   :height 4
-   :grid {[0 0] :a [1 0] :b
-          [0 1] :c [1 1] :d
-          [0 2] :e [1 2] :f
-          [0 3] :g [1 3] :h}})
+
+(def opposite-dir {:n :s :s :n :e :w :w :e})
+(defn orthogonal-dir
+  [edge-matches [tile dir]]
+  (let [options (keys (edge-matches tile))
+        orth-dirs (case dir
+                    :n #{:e :w}
+                    :s #{:e :w}
+                    :e #{:n :s}
+                    :w #{:n :s})]
+    [tile (some orth-dirs options)]))
+
+(defn next-tile
+  [edge-matches [tile dir]]
+  (get-in edge-matches [tile (opposite-dir dir)]))
+
+(defn tile-row
+  [edge-matches [start dir]]
+  (take-while some? (iterate (partial next-tile edge-matches) [start (opposite-dir dir)])))
+
+(defn tile-positions
+  [edge-matches]
+  (let [start        (first (corners edge-matches))
+        start-dir    (first (keys (edge-matches start)))
+        edge         (map (partial orthogonal-dir edge-matches)
+                          (tile-row edge-matches [start start-dir]))
+        rows         (count edge)
+        ordered-tiles (->> (mapcat (partial tile-row edge-matches) edge)
+                           (map first))
+        cols         (/ (count ordered-tiles) rows)]
+    {:width cols
+     :height rows
+     :grid (zipmap (for [y (range rows) x (range cols)] [x y])
+                   ordered-tiles)}))
+
+(def neighbors {[0 -1] :n
+                [1 0] :e
+                [0 1] :s
+                [-1 0] :w})
+
+(defn desired-edge
+  [grid valid-locs [pos tile]]
+  (let [n-pos  (->> (map (fn [[loc dir]]
+                           [(map + pos loc) dir]) neighbors)
+                    (filter (comp valid-locs first)))]
+    {tile (into {} (mapv (fn [[loc dir]]
+                           [dir [(grid loc) (opposite-dir dir)]])
+                         n-pos))}))
+
+(defn desired-edges
+  [{:keys [grid]}]
+  (let [valid-locs (set (keys grid))]
+    (apply merge (map (partial desired-edge grid valid-locs) grid))))
+
+(def baz (desired-edges bar))
+baz
+
+(def foo {2729 {1427 :e, 1951 :s, 2971 :n}, 1171 {2473 :n, 1489 :e}, 2971 {1489 :e, 2729 :s}, 2311 {1951 :w, 3079 :e, 1427 :n}, 1489 {1427 :s, 2971 :w, 1171 :e}, 1427 {2473 :e, 2729 :w, 1489 :n, 2311 :s}, 3079 {2473 :s, 2311 :w}, 2473 {1171 :w, 3079 :e, 1427 :s}, 1951 {2311 :e, 2729 :n}})
+(def bar {2729 {2971 :n, 1951 :s, 1427 :w}, 1171 {1489 :e, 2473 :s}, 2971 {2729 :s, 1489 :w}, 2311 {1427 :n, 1951 :e, 3079 :w}, 1489 {2971 :e, 1427 :s, 1171 :w}, 1427 {1489 :n, 2729 :e, 2311 :s, 2473 :w}, 3079 {2473 :n, 2311 :e}, 2473 {1171 :n, 1427 :e, 3079 :s}, 1951 {2729 :n, 2311 :w}})
 
 (defn orient
-  [desired current])
+  [current-edges desired-edges]
+  (let [tiles (keys current-edges)
+        deltas (->> (map (comp set vector)
+                         (map current-edges tiles)
+                         (map desired-edges tiles))
+                    (filter #(> 1 (count %))))]
+    (if (empty? deltas)
+      [:no-op]
+      deltas)))
 
-(defn first-corner-orientation
-  [as-is]
-  (case as-is
-    #{:e :s} [:no-op] nil
-    #{:s :w} [:rotate 3]
-    #{:w :n} [:rotate 2]
-    #{:n :e} [:rotate 1]))
+(orient (first (vals foo)) (first (vals bar)))
 
-(defn tile-orientations
-  [tiles]
-  (let [tile-edge-map (tile-edge-map tiles)
-        matching-edges (matching-edges tile-edge-map)
-        corners (corners matching-edges)
-        upper-left (first corners)]
-    (set (map (comp second first) (get matching-edges upper-left)))))
+(defn simplify-edges
+  [edges]
+  (u/invert-map (u/fmap first edges)))
 
-(tile-orientations day20-sample)
+(defn orient-tiles
+  [current desired]
+  (let [c (u/fmap simplify-edges current)
+        d (u/fmap simplify-edges desired)
+        tiles (keys d)]
+    (map orient (map c tiles) (map d tiles))))
+
+((u/fmap simplify-edges foo) 2729)
+((u/fmap simplify-edges baz) 2729)
+
+
+(map (comp set vector)
+     (map {1427 :e 1951 :s 2971 :n} [1427 1951 2971])
+     (map {2971 :n 1951 :s 1427 :w} [1427 1951 2971]))
 
 (defn is-edge?
   [width height [x y]]
@@ -270,8 +330,7 @@ Tile 3079:
      :height (- height 2)
      :grid (into {} (filter (comp is-not-edge? key) grid))}))
 
-(defn combine
-  [])
+
 
 ;; (defn final-image
 ;;   [tiles]
