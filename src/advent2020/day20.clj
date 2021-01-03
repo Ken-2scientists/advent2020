@@ -192,23 +192,10 @@ Tile 3079:
   [{:keys [width grid] :as tile}]
   (assoc tile :grid (u/kmap (fn [[x y]] [(- (dec width) x) y]) grid)))
 
-(defn fliph-edge
-  [{:keys [n e s w]}]
-  {:n n
-   :e w
-   :s s
-   :w e})
 
 (defn flipv
   [{:keys [height grid] :as tile}]
   (assoc tile :grid (u/kmap (fn [[x y]] [x (- (dec height) y)]) grid)))
-
-(defn flipv-edge
-  [{:keys [n e s w]}]
-  {:n s
-   :e e
-   :s n
-   :w w})
 
 (defn rotate
   [{:keys [width height grid]}]
@@ -216,14 +203,6 @@ Tile 3079:
     {:width height
      :height width
      :grid (u/kmap mapping grid)}))
-
-(defn rotate-edge
-  [{:keys [n e s w]}]
-  {:n (str/reverse w)
-   :e n
-   :s (str/reverse e)
-   :w s})
-
 
 (def opposite-dir {:n :s :s :n :e :w :w :e})
 (defn orthogonal-dir
@@ -278,11 +257,21 @@ Tile 3079:
   (let [valid-locs (set (keys grid))]
     (apply merge (map (partial desired-edge grid valid-locs) grid))))
 
-(def baz (desired-edges bar))
-baz
+(defn fliph-edge
+  [edges]
+  (u/fmap #(if (#{:e :w} %)
+             (opposite-dir %)
+             %) edges))
 
-(def foo {2729 {1427 :e, 1951 :s, 2971 :n}, 1171 {2473 :n, 1489 :e}, 2971 {1489 :e, 2729 :s}, 2311 {1951 :w, 3079 :e, 1427 :n}, 1489 {1427 :s, 2971 :w, 1171 :e}, 1427 {2473 :e, 2729 :w, 1489 :n, 2311 :s}, 3079 {2473 :s, 2311 :w}, 2473 {1171 :w, 3079 :e, 1427 :s}, 1951 {2311 :e, 2729 :n}})
-(def bar {2729 {2971 :n, 1951 :s, 1427 :w}, 1171 {1489 :e, 2473 :s}, 2971 {2729 :s, 1489 :w}, 2311 {1427 :n, 1951 :e, 3079 :w}, 1489 {2971 :e, 1427 :s, 1171 :w}, 1427 {1489 :n, 2729 :e, 2311 :s, 2473 :w}, 3079 {2473 :n, 2311 :e}, 2473 {1171 :n, 1427 :e, 3079 :s}, 1951 {2729 :n, 2311 :w}})
+(defn flipv-edge
+  [edges]
+  (u/fmap #(if (#{:n :s} %)
+             (opposite-dir %)
+             %) edges))
+
+(defn rotate-edge
+  [edges]
+  (u/fmap {:n :e :e :s :s :w :w :n} edges))
 
 (defn orient
   [current-edges desired-edges]
@@ -290,31 +279,37 @@ baz
         deltas (->> (map (comp set vector)
                          (map current-edges tiles)
                          (map desired-edges tiles))
-                    (filter #(> 1 (count %))))]
-    (if (empty? deltas)
-      [:no-op]
-      deltas)))
-
-(orient (first (vals foo)) (first (vals bar)))
+                    (filter #(> (count %) 1)))
+        delta-count (count deltas)]
+    (case delta-count
+      0 [:no-op]
+      1 (if (= #{:e :w} (first deltas))
+          [:fliph]
+          [:flipv])
+      (case (first deltas)
+        #{:e :w} [:fliph (orient (fliph-edge current-edges) desired-edges)]
+        #{:n :s} [:flipv (orient (flipv-edge current-edges) desired-edges)]
+        [:rotate (orient (rotate-edge current-edges) desired-edges)]))))
 
 (defn simplify-edges
   [edges]
   (u/invert-map (u/fmap first edges)))
 
-(defn orient-tiles
+(defn tile-orientations
   [current desired]
   (let [c (u/fmap simplify-edges current)
         d (u/fmap simplify-edges desired)
         tiles (keys d)]
-    (map orient (map c tiles) (map d tiles))))
+    (zipmap tiles
+            (map (comp flatten orient) (map c tiles) (map d tiles)))))
 
-((u/fmap simplify-edges foo) 2729)
-((u/fmap simplify-edges baz) 2729)
-
-
-(map (comp set vector)
-     (map {1427 :e 1951 :s 2971 :n} [1427 1951 2971])
-     (map {2971 :n 1951 :s 1427 :w} [1427 1951 2971]))
+(first day20-input)
+(def foo (matching-edges (tile-edge-map day20-sample)))
+(def bar (tile-positions foo))
+(def baz (desired-edges bar))
+(def oof (tile-orientations foo baz))
+bar
+oof
 
 (defn is-edge?
   [width height [x y]]
@@ -330,14 +325,38 @@ baz
      :height (- height 2)
      :grid (into {} (filter (comp is-not-edge? key) grid))}))
 
+(defn oriented
+  [tile command]
+  (case command
+    :no-op tile
+    :fliph (fliph tile)
+    :flipv (flipv tile)
+    :rotate (rotate tile)))
 
+(defn corrected-tile
+  [tiles orientations [[shift-x shift-y] tile-id]]
+  (let [tile     (get tiles tile-id)
+        commands (get orientations tile-id)]
+    (->>
+     (reduce oriented tile commands)
+     trim-edge
+     :grid
+     (u/kmap (fn [[x y]]
+               [(+ (* 8 shift-x) x -1)
+                (+ (* 8 shift-y) y -1)])))))
 
-;; (defn final-image
-;;   [tiles]
-;;   (let [[orientations offsets] (tile-positions-and-orientations tiles)
-;;         corrected-tiles (->> tiles
-;;                              (u/fmap trim-edge)
-;;                              (map orientations)
-;;                              (map offsets)
-;;                              combine)]))
+(defn reassembled-image
+  [tiles]
+  (let [edge-matches  (matching-edges (tile-edge-map tiles))
+        positions     (tile-positions edge-matches)
+        desired-edges (desired-edges positions)
+        orientations  (tile-orientations edge-matches desired-edges)
+        do-everything (partial corrected-tile tiles orientations)
+        width         (* 8 (:width positions))
+        height        (* 8 (:height positions))]
+    {:height height
+     :width  width
+     :grid (apply merge (map do-everything (:grid positions)))}))
+
+(print (ascii/map->ascii  {\. 0 \# 1}  (flipv (rotate  (reassembled-image day20-sample)))))
 
