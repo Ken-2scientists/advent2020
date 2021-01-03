@@ -1,15 +1,25 @@
 (ns advent2020.day20
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [advent-utils.ascii :as ascii]
             [advent-utils.core :as u]))
+
+(def charmap  {\. 0 \# 1})
+(def sea-monster-pattern
+  (->> (ascii/ascii->map
+        charmap
+        ["                  # "
+         "#    ##    ##    ###"
+         " #  #  #  #  #  #   "])
+       :grid
+       (filter (comp some? second))
+       (map first)))
 
 (defn parse-tile
   [tile-str]
   (let [[header grid] (str/split tile-str #":\n")
         tile-id (read-string (subs header 5 9))]
     [tile-id (ascii/ascii->map
-              {\. 0 \# 1}
+              charmap
               (str/split grid #"\n"))]))
 
 (defn parse
@@ -17,116 +27,6 @@
   (->> (str/split input #"\n\n")
        (map parse-tile)
        (into {})))
-
-(def day20-sample
-  (parse
-   "Tile 2311:
-..##.#..#.
-##..#.....
-#...##..#.
-####.#...#
-##.##.###.
-##...#.###
-.#.#.#..##
-..#....#..
-###...#.#.
-..###..###
-
-Tile 1951:
-#.##...##.
-#.####...#
-.....#..##
-#...######
-.##.#....#
-.###.#####
-###.##.##.
-.###....#.
-..#.#..#.#
-#...##.#..
-
-Tile 1171:
-####...##.
-#..##.#..#
-##.#..#.#.
-.###.####.
-..###.####
-.##....##.
-.#...####.
-#.##.####.
-####..#...
-.....##...
-
-Tile 1427:
-###.##.#..
-.#..#.##..
-.#.##.#..#
-#.#.#.##.#
-....#...##
-...##..##.
-...#.#####
-.#.####.#.
-..#..###.#
-..##.#..#.
-
-Tile 1489:
-##.#.#....
-..##...#..
-.##..##...
-..#...#...
-#####...#.
-#..#.#.#.#
-...#.#.#..
-##.#...##.
-..##.##.##
-###.##.#..
-
-Tile 2473:
-#....####.
-#..#.##...
-#.##..#...
-######.#.#
-.#...#.#.#
-.#########
-.###.#..#.
-########.#
-##...##.#.
-..###.#.#.
-
-Tile 2971:
-..#.#....#
-#...###...
-#.#.###...
-##.##..#..
-.#####..##
-.#..####.#
-#..#.#..#.
-..####.###
-..#.#.###.
-...#.#.#.#
-
-Tile 2729:
-...#.#.#.#
-####.#....
-..#.#.....
-....#..#.#
-.##..##.#.
-.#.####...
-####.#.#..
-##.####...
-##..#.##..
-#.##...##.
-
-Tile 3079:
-#.#.#####.
-.#..######
-..#.......
-######....
-####.#..#.
-.#...#.##.
-#.#####.##
-..#.###...
-..#.......
-..#.###..."))
 
 (def day20-input
   (->> (u/puzzle-input "day20-input.txt")
@@ -179,30 +79,6 @@ Tile 3079:
   (let [match-counts (u/fmap count matching-edges)]
     (->> (filter #(= 2 (second %)) match-counts)
          (map first))))
-
-(defn day20-part1-soln
-  []
-  (->> day20-input
-       tile-edge-map
-       matching-edges
-       corners
-       (reduce *)))
-
-(defn fliph
-  [{:keys [width grid] :as tile}]
-  (assoc tile :grid (u/kmap (fn [[x y]] [(- (dec width) x) y]) grid)))
-
-
-(defn flipv
-  [{:keys [height grid] :as tile}]
-  (assoc tile :grid (u/kmap (fn [[x y]] [x (- (dec height) y)]) grid)))
-
-(defn rotate
-  [{:keys [width height grid]}]
-  (let [mapping (fn [[x y]] [(- (dec height) y) x])]
-    {:width height
-     :height width
-     :grid (u/kmap mapping grid)}))
 
 (def opposite-dir {:n :s :s :n :e :w :w :e})
 (defn orthogonal-dir
@@ -303,14 +179,6 @@ Tile 3079:
     (zipmap tiles
             (map (comp flatten orient) (map c tiles) (map d tiles)))))
 
-(first day20-input)
-(def foo (matching-edges (tile-edge-map day20-sample)))
-(def bar (tile-positions foo))
-(def baz (desired-edges bar))
-(def oof (tile-orientations foo baz))
-bar
-oof
-
 (defn is-edge?
   [width height [x y]]
   (or (= 0 x)
@@ -324,6 +192,21 @@ oof
     {:width (- width 2)
      :height (- height 2)
      :grid (into {} (filter (comp is-not-edge? key) grid))}))
+
+(defn fliph
+  [{:keys [width grid] :as tile}]
+  (assoc tile :grid (u/kmap (fn [[x y]] [(- (dec width) x) y]) grid)))
+
+(defn flipv
+  [{:keys [height grid] :as tile}]
+  (assoc tile :grid (u/kmap (fn [[x y]] [x (- (dec height) y)]) grid)))
+
+(defn rotate
+  [{:keys [width height grid]}]
+  (let [mapping (fn [[x y]] [(- (dec height) y) x])]
+    {:width height
+     :height width
+     :grid (u/kmap mapping grid)}))
 
 (defn oriented
   [tile command]
@@ -358,5 +241,48 @@ oof
      :width  width
      :grid (apply merge (map do-everything (:grid positions)))}))
 
-(print (ascii/map->ascii  {\. 0 \# 1}  (flipv (rotate  (reassembled-image day20-sample)))))
+(def all-orientation-cmds
+  [[:no-op]
+   [:rotate]
+   [:rotate :rotate]
+   [:rotate :rotate :rotate]
+   [:fliph]
+   [:fliph :rotate]
+   [:fliph :rotate :rotate]
+   [:fliph :rotate :rotate :rotate]])
 
+(defn all-orientations
+  [tile]
+  (map (partial reduce oriented tile) all-orientation-cmds))
+
+(defn is-sea-monster?
+  [grid pos]
+  (let [positions (map (partial map + pos) sea-monster-pattern)]
+    (every? #(= 1 %) (map grid positions))))
+
+(defn sea-monster-count
+  [{:keys [width height grid]}]
+  (->> (filter (partial is-sea-monster? grid)
+               (for [x (range (- width 20))
+                     y (range (- height 3))]
+                 [x y]))
+       count))
+
+(defn sea-roughness
+  [tiles]
+  (let [image (reassembled-image tiles)
+        ones  (count (filter #(= 1 (val %)) (:grid image)))
+        sea-monsters (apply max (map sea-monster-count (all-orientations image)))]
+    (- ones (* sea-monsters (count sea-monster-pattern)))))
+
+(defn day20-part1-soln
+  []
+  (->> day20-input
+       tile-edge-map
+       matching-edges
+       corners
+       (reduce *)))
+
+(defn day20-part2-soln
+  []
+  (sea-roughness day20-input))

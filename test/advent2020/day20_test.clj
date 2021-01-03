@@ -177,11 +177,6 @@ Tile 3079:
             :grid {[1 1] :e}}
            (t/trim-edge grid-sample2)))))
 
-(deftest day20-part1-soln
-  (testing "Reproduces the answer for day20, part1"
-    (is (= 79412832860579 (t/day20-part1-soln)))))
-
-
 (deftest orientation-rules
   (testing "Correctly determines the necessary flips/rotations"
     (is (= [:fliph]
@@ -206,9 +201,14 @@ Tile 3079:
            (t/orient {1171 :w, 3079 :e, 1427 :s}
                      {1171 :n, 3079 :s, 1427 :e})))))
 
+(deftest sea-monsters
+  (testing "Can find the correct number of sea monsters in a reassembled image"
+    (is (= 2 (t/sea-monster-count (t/flipv (t/rotate (t/reassembled-image day20-sample))))))))
 
+(deftest day20-part1-soln
+  (testing "Reproduces the answer for day20, part1"
+    (is (= 79412832860579 (t/day20-part1-soln)))))
 
-
-;; (deftest day20-part2-soln
-;;   (testing "Reproduces the answer for day20, part2"
-;;     (is (= 439 (t/day20-part2-soln)))))
+(deftest day20-part2-soln
+  (testing "Reproduces the answer for day20, part2"
+    (is (= 2155 (t/day20-part2-soln)))))
